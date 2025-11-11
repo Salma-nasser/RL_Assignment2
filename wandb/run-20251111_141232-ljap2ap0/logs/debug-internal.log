@@ -1,0 +1,12 @@
+{"time":"2025-11-11T14:12:33.9179098+02:00","level":"INFO","msg":"stream: starting","core version":"0.22.3"}
+{"time":"2025-11-11T14:12:34.3504167+02:00","level":"INFO","msg":"stream: created new stream","id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:34.3504167+02:00","level":"INFO","msg":"handler: started","stream_id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:34.3530059+02:00","level":"INFO","msg":"stream: started","id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:34.3535474+02:00","level":"INFO","msg":"sender: started","stream_id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:34.3535474+02:00","level":"INFO","msg":"writer: started","stream_id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:37.5655521+02:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-11-11T14:12:38.0426599+02:00","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2025-11-11T14:12:38.0834667+02:00","level":"INFO","msg":"stream: closing","id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:38.0840865+02:00","level":"INFO","msg":"handler: closed","stream_id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:38.0904708+02:00","level":"INFO","msg":"sender: closed","stream_id":"ljap2ap0"}
+{"time":"2025-11-11T14:12:38.0904708+02:00","level":"INFO","msg":"stream: closed","id":"ljap2ap0"}

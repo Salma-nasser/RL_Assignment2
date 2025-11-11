@@ -1,0 +1,52 @@
+_wandb:
+    value:
+        cli_version: 0.22.3
+        e:
+            0uapta5v7r39ynyq3owk6q9em97l7ub1:
+                codePath: c:\Users\salma\Desktop\RL\RL_Assignment2\DQN.ipynb
+                codePathLocal: DQN.ipynb
+                cpu_count: 10
+                cpu_count_logical: 12
+                disk:
+                    /:
+                        total: "486788820992"
+                        used: "366188679168"
+                email: salma.elhosseiny03@eng-st.cu.edu.eg
+                executable: c:\Users\salma\anaconda3\python.exe
+                git:
+                    commit: 0944fb67cc932d50d833afaf6b14ffda5ba5b807
+                    remote: https://github.com/Salma-nasser/RL_Assignment2.git
+                host: Salma_Nasser
+                memory:
+                    total: "16849293312"
+                os: Windows-11-10.0.26200-SP0
+                program: c:\Users\salma\Desktop\RL\RL_Assignment2\DQN.ipynb
+                python: CPython 3.12.3
+                root: c:\Users\salma\Desktop\RL\RL_Assignment2
+                startedAt: "2025-11-11T12:12:32.216722Z"
+                writerId: 0uapta5v7r39ynyq3owk6q9em97l7ub1
+        m: []
+        python_version: 3.12.3
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 16
+            "4": 3.12.3
+            "5": 0.22.3
+            "8":
+                - 1
+                - 3
+            "12": 0.22.3
+            "13": windows-amd64
+architecture:
+    value: CNN
+dataset:
+    value: CIFAR-100
+epochs:
+    value: 10
+learning_rate:
+    value: 0.02

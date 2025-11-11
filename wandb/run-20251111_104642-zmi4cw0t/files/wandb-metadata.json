@@ -1,0 +1,27 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "CPython 3.12.3",
+  "startedAt": "2025-11-11T08:46:42.186543Z",
+  "program": "c:\\Users\\salma\\Desktop\\RL\\RL_Assignment2\\DQN.ipynb",
+  "codePath": "c:\\Users\\salma\\Desktop\\RL\\RL_Assignment2\\DQN.ipynb",
+  "codePathLocal": "DQN.ipynb",
+  "git": {
+    "remote": "https://github.com/Salma-nasser/RL_Assignment2.git",
+    "commit": "0944fb67cc932d50d833afaf6b14ffda5ba5b807"
+  },
+  "root": "c:\\Users\\salma\\Desktop\\RL\\RL_Assignment2",
+  "host": "Salma_Nasser",
+  "executable": "c:\\Users\\salma\\anaconda3\\python.exe",
+  "cpu_count": 10,
+  "cpu_count_logical": 12,
+  "disk": {
+    "/": {
+      "total": "486788820992",
+      "used": "356547985408"
+    }
+  },
+  "memory": {
+    "total": "16849293312"
+  },
+  "writerId": "8hjg947ncaasnu2ui90qwnne9qg7ba58"
+}
