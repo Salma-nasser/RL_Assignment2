@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# IDEs
+.vscode/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# WandB
+wandb/
+wandb/run-20251112_113605-3kllrvku/logs/debug-internal.log
+/wandb
