@@ -9,14 +9,56 @@ import os
 from pathlib import Path
 
 import gymnasium as gym
+from gymnasium import ActionWrapper, spaces
+import numpy as np
 import torch
 import wandb
 
 from rl.agents import DQNAgent
 
 
-def make_env(env_name, seed=None, record_video=False, video_folder="videos"):
-    env = gym.make(env_name)
+class DiscretizeAction(ActionWrapper):
+    """Wrapper to discretize continuous action spaces for DQN."""
+    def __init__(self, env, n_actions=11):
+        super().__init__(env)
+        self.n_actions = n_actions
+        self.action_space = spaces.Discrete(n_actions)
+        
+        # Handle multi-dimensional action spaces
+        if hasattr(env.action_space, 'shape') and len(env.action_space.shape) > 0:
+            self.action_dim = env.action_space.shape[0]
+            self.continuous_actions = []
+            for i in range(self.action_dim):
+                low = env.action_space.low[i]
+                high = env.action_space.high[i]
+                self.continuous_actions.append(np.linspace(low, high, n_actions))
+        else:
+            # Single dimension
+            self.action_dim = 1
+            low = env.action_space.low[0] if hasattr(env.action_space.low, '__getitem__') else env.action_space.low
+            high = env.action_space.high[0] if hasattr(env.action_space.high, '__getitem__') else env.action_space.high
+            self.continuous_actions = [np.linspace(low, high, n_actions)]
+    
+    def action(self, action):
+        """Convert discrete action to continuous."""
+        if self.action_dim == 1:
+            return np.array([self.continuous_actions[0][action]])
+        else:
+            # For multi-dimensional, map single discrete action to continuous vector
+            # Simple approach: use same discrete index for all dimensions
+            return np.array([self.continuous_actions[i][action] for i in range(self.action_dim)])
+
+
+def make_env(env_name, seed=None, record_video=False, video_folder="videos", algo=None, n_discrete_actions=11):
+    # Create environment with appropriate render mode
+    render_mode = 'rgb_array' if record_video else None
+    env = gym.make(env_name, render_mode=render_mode)
+    
+    # Check if action space is continuous (Box) and discretize it
+    if isinstance(env.action_space, spaces.Box):
+        print(f"Detected continuous action space for {env_name}. Discretizing into {n_discrete_actions} actions.")
+        env = DiscretizeAction(env, n_actions=n_discrete_actions)
+    
     if seed is not None:
         try:
             env.reset(seed=seed)
@@ -24,8 +66,16 @@ def make_env(env_name, seed=None, record_video=False, video_folder="videos"):
             env.observation_space.seed(seed)
         except Exception:
             pass
+    
     if record_video:
-        env = gym.wrappers.RecordVideo(env, video_folder, episode_trigger=lambda e: True, name_prefix=env_name)
+        # Organize videos: videos/{algo}/{env_name}/
+        if algo:
+            video_path = os.path.join(video_folder, algo.upper(), env_name)
+        else:
+            video_path = os.path.join(video_folder, env_name)
+        os.makedirs(video_path, exist_ok=True)
+        env = gym.wrappers.RecordVideo(env, video_path, episode_trigger=lambda e: True, name_prefix=env_name)
+    
     return env
 
 
@@ -34,7 +84,15 @@ def run_tests(env_name: str, model_path: str, episodes: int = 100, device: str =
 
     run = wandb.init(project=project, entity=entity, config={'env': env_name, 'model_path': model_path, 'episodes': episodes})
 
-    env = make_env(env_name, record_video=record_video)
+    # Infer algo from model path (e.g., "CartPole-v1_dqn.pt" -> "dqn")
+    model_name = Path(model_path).stem
+    algo = None
+    if '_dqn' in model_name.lower():
+        algo = 'dqn'
+    elif '_ddqn' in model_name.lower():
+        algo = 'ddqn'
+    
+    env = make_env(env_name, record_video=record_video, algo=algo)
     obs, _ = env.reset()
     n_observations = len(obs)
     n_actions = env.action_space.n

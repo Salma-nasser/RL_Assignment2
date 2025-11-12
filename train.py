@@ -12,15 +12,57 @@ import time
 from pathlib import Path
 
 import gymnasium as gym
+from gymnasium import ActionWrapper, spaces
 import numpy as np
 import torch
 import wandb
+import math
 
 from rl.agents import DQNAgent, DDQNAgent
 
 
-def make_env(env_name, seed=None, record_video=False, video_folder="videos"):
-    env = gym.make(env_name)
+class DiscretizeAction(ActionWrapper):
+    """Wrapper to discretize continuous action spaces for DQN."""
+    def __init__(self, env, n_actions=11):
+        super().__init__(env)
+        self.n_actions = n_actions
+        self.action_space = spaces.Discrete(n_actions)
+        
+        # Handle multi-dimensional action spaces
+        if hasattr(env.action_space, 'shape') and len(env.action_space.shape) > 0:
+            self.action_dim = env.action_space.shape[0]
+            self.continuous_actions = []
+            for i in range(self.action_dim):
+                low = env.action_space.low[i]
+                high = env.action_space.high[i]
+                self.continuous_actions.append(np.linspace(low, high, n_actions))
+        else:
+            # Single dimension
+            self.action_dim = 1
+            low = env.action_space.low[0] if hasattr(env.action_space.low, '__getitem__') else env.action_space.low
+            high = env.action_space.high[0] if hasattr(env.action_space.high, '__getitem__') else env.action_space.high
+            self.continuous_actions = [np.linspace(low, high, n_actions)]
+    
+    def action(self, action):
+        """Convert discrete action to continuous."""
+        if self.action_dim == 1:
+            return np.array([self.continuous_actions[0][action]])
+        else:
+            # For multi-dimensional, map single discrete action to continuous vector
+            # Simple approach: use same discrete index for all dimensions
+            return np.array([self.continuous_actions[i][action] for i in range(self.action_dim)])
+
+
+def make_env(env_name, seed=None, record_video=False, video_folder="videos", algo=None, n_discrete_actions=11):
+    # Create environment with appropriate render mode
+    render_mode = 'rgb_array' if record_video else None
+    env = gym.make(env_name, render_mode=render_mode)
+    
+    # Check if action space is continuous (Box) and discretize it
+    if isinstance(env.action_space, spaces.Box):
+        print(f"Detected continuous action space for {env_name}. Discretizing into {n_discrete_actions} actions.")
+        env = DiscretizeAction(env, n_actions=n_discrete_actions)
+    
     if seed is not None:
         try:
             env.reset(seed=seed)
@@ -28,9 +70,16 @@ def make_env(env_name, seed=None, record_video=False, video_folder="videos"):
             env.observation_space.seed(seed)
         except Exception:
             pass
+    
     if record_video:
-        # This will record episodes where the trigger is True; here we record all episodes.
-        env = gym.wrappers.RecordVideo(env, video_folder, episode_trigger=lambda e: True, name_prefix=env_name)
+        # Organize videos: videos/{algo}/{env_name}/
+        if algo:
+            video_path = os.path.join(video_folder, algo.upper(), env_name)
+        else:
+            video_path = os.path.join(video_folder, env_name)
+        os.makedirs(video_path, exist_ok=True)
+        env = gym.wrappers.RecordVideo(env, video_path, episode_trigger=lambda e: True, name_prefix=env_name)
+    
     return env
 
 
@@ -68,7 +117,7 @@ def train(
     })
     cfg = run.config
 
-    env = make_env(env_name, record_video=record_video)
+    env = make_env(env_name, record_video=record_video, algo=algo)
     n_actions = env.action_space.n
     obs, _ = env.reset()
     n_observations = len(obs)
@@ -79,11 +128,17 @@ def train(
 
     episode_durations = []
 
+    print(f"Training {algo.upper()} on {env_name} for {episodes} episodes...")
+    
     for i_episode in range(episodes):
         state, _ = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         total_reward = 0.0
         t = 0
+        
+        # Print current episode (will be updated in-place)
+        print(f"\rEpisode {i_episode + 1}/{episodes} - Running...", end='', flush=True)
+        
         while True:
             eps_threshold = eps_end + (eps_start - eps_end) * math.exp(-1. * agent.steps_done / eps_decay)
             action = agent.select_action(state, eps_threshold)
@@ -109,6 +164,8 @@ def train(
             if done:
                 episode_durations.append(t)
                 run.log({'train/episode_reward': total_reward, 'train/episode_length': t, 'train/episode': i_episode})
+                # Update the line with episode completion info
+                print(f"\rEpisode {i_episode + 1}/{episodes} - Reward: {total_reward:.2f}, Length: {t}, Epsilon: {eps_threshold:.3f}", end='', flush=True)
                 break
 
         # periodic checkpoint
@@ -117,7 +174,11 @@ def train(
             model_path = f"models/{env_name}_{algo}.pt"
             agent.save(model_path)
             run.save(model_path)
+            print()  # New line after checkpoint save
 
+    # Print final newline and completion message
+    print(f"\n\nTraining completed! Final model saved.")
+    
     # final save
     os.makedirs('models', exist_ok=True)
     model_path = f"models/{env_name}_{algo}.pt"
