@@ -53,7 +53,8 @@ class DiscretizeAction(ActionWrapper):
             return np.array([self.continuous_actions[i][action] for i in range(self.action_dim)])
 
 
-def make_env(env_name, seed=None, record_video=False, video_folder="videos", algo=None, n_discrete_actions=11):
+def make_env(env_name, seed=None, record_video=False, video_folder="videos", algo=None,
+             n_discrete_actions=11, video_frequency=50):
     # Create environment with appropriate render mode
     render_mode = 'rgb_array' if record_video else None
     env = gym.make(env_name, render_mode=render_mode)
@@ -78,7 +79,11 @@ def make_env(env_name, seed=None, record_video=False, video_folder="videos", alg
         else:
             video_path = os.path.join(video_folder, env_name)
         os.makedirs(video_path, exist_ok=True)
-        env = gym.wrappers.RecordVideo(env, video_path, episode_trigger=lambda e: True, name_prefix=env_name)
+        def should_record(episode_id):
+            # Capture the very first episode and then every Nth episode for progress tracking.
+            return episode_id == 0 or ((episode_id + 1) % video_frequency == 0)
+
+        env = gym.wrappers.RecordVideo(env, video_path, episode_trigger=should_record, name_prefix=env_name)
     
     return env
 
